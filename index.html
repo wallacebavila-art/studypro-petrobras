@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyPRO · Petrobras CESGRANRIO</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Firebase Compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+:root{--bg:#0b0f1a;--surf:#141922;--surf2:#1c2333;--surf3:#222b3d;--brd:#2a3347;--pri:#00c853;--pri-dim:rgba(0,200,83,.12);--sec:#ffd600;--sec-dim:rgba(255,214,0,.12);--acc:#58a6ff;--txt:#eaf0fb;--mut:#6b7a99;--err:#f85149;--ok:#3fb950;--warn:#d29922;--sw:230px;--r:10px;--sh:0 8px 32px rgba(0,0,0,.5)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--txt);display:flex;min-height:100vh;font-size:14px;line-height:1.5}
+.sidebar{width:var(--sw);background:var(--surf);border-right:1px solid var(--brd);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.logo{padding:22px 20px 16px;border-bottom:1px solid var(--brd)}
+.logo-mark{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--pri);letter-spacing:-.5px}
+.logo-mark span{color:var(--txt);opacity:.5}
+.logo-sub{font-size:10px;color:var(--mut);margin-top:2px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.fb-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,160,0,.15);color:#ffa000;font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:5px;letter-spacing:.3px}
+.nav{padding:14px 0;flex:1}
+.nav-sec{padding:10px 18px 4px;font-size:10px;font-weight:700;color:var(--mut);letter-spacing:1.2px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--mut);border-left:2px solid transparent;transition:all .15s;font-weight:600;font-size:13px}
+.nav-item:hover{color:var(--txt);background:var(--surf2)}
+.nav-item.active{color:var(--pri);border-left-color:var(--pri);background:var(--pri-dim)}
+.nav-item .ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--pri);color:#000;font-size:10px;font-weight:800;padding:1px 6px;border-radius:10px;font-family:'JetBrains Mono'}
+.sidebar-stats{padding:14px;border-top:1px solid var(--brd)}
+.ss-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.ss-card{background:var(--surf2);border-radius:8px;padding:8px 10px;text-align:center}
+.ss-num{font-family:'JetBrains Mono';font-size:20px;font-weight:500;color:var(--pri)}
+.ss-lbl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.sync-indicator{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--mut);padding:6px 0;justify-content:center}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--mut);flex-shrink:0}
+.sync-dot.ok{background:var(--ok)}.sync-dot.syncing{background:var(--sec);animation:pulse 1s infinite}.sync-dot.err{background:var(--err)}
+.main{margin-left:var(--sw);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--surf);border-bottom:1px solid var(--brd);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
+.topbar-actions{display:flex;gap:8px;align-items:center}
+.content{padding:28px;flex:1}
+.view{display:none}.view.active{display:block}
+.btn{padding:8px 16px;border-radius:var(--r);border:none;cursor:pointer;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn-pri{background:var(--pri);color:#000}.btn-pri:hover{filter:brightness(1.1)}
+.btn-sec{background:var(--surf2);color:var(--txt);border:1px solid var(--brd)}.btn-sec:hover{border-color:var(--pri);color:var(--pri)}
+.btn-ghost{background:transparent;color:var(--mut);border:1px solid var(--brd)}.btn-ghost:hover{color:var(--txt);border-color:var(--mut)}
+.btn-danger{background:var(--err);color:#fff}.btn-danger:hover{filter:brightness(1.1)}
+.btn-warn{background:var(--sec);color:#000}.btn-warn:hover{filter:brightness(1.05)}
+.btn-sm{padding:5px 10px;font-size:12px}.btn-lg{padding:13px 26px;font-size:15px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r);padding:20px}
+.card-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:16px}
+.stat-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r);padding:20px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--pri)}
+.stat-card.y::before{background:var(--sec)}.stat-card.b::before{background:var(--acc)}.stat-card.r::before{background:var(--err)}
+.stat-val{font-family:'JetBrains Mono';font-size:36px;font-weight:500;color:var(--pri);line-height:1}
+.stat-card.y .stat-val{color:var(--sec)}.stat-card.b .stat-val{color:var(--acc)}.stat-card.r .stat-val{color:var(--err)}
+.stat-lbl{font-size:12px;color:var(--mut);margin-top:4px;font-weight:600}
+.stat-sub{font-size:11px;color:var(--mut);margin-top:8px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.flex{display:flex}.flex-col{flex-direction:column}.ac{align-items:center}.jb{justify-content:space-between}.gap4{gap:4px}.gap8{gap:8px}.gap12{gap:12px}.gap16{gap:16px}.fw{flex-wrap:wrap}
+.mt8{margin-top:8px}.mt16{margin-top:16px}.mt24{margin-top:24px}.mb8{margin-bottom:8px}.mb16{margin-bottom:16px}
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;font-family:'JetBrains Mono'}
+.bg{background:var(--pri-dim);color:var(--pri)}.by{background:var(--sec-dim);color:var(--sec)}.br{background:rgba(248,81,73,.15);color:var(--err)}.bb{background:rgba(88,166,255,.15);color:var(--acc)}.bm{background:var(--surf2);color:var(--mut)}
+.dif-facil{background:rgba(63,185,80,.15);color:var(--ok)}.dif-media{background:var(--sec-dim);color:var(--sec)}.dif-dificil{background:rgba(248,81,73,.15);color:var(--err)}
+.q-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--r);padding:18px;margin-bottom:10px;transition:border-color .15s}
+.q-card:hover{border-color:var(--pri)}
+.q-meta{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.q-text{color:var(--txt);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:13.5px}
+.q-actions{display:flex;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--brd)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.f-sel{background:var(--surf);border:1px solid var(--brd);color:var(--txt);padding:7px 12px;border-radius:8px;font-family:'Nunito';font-size:13px;cursor:pointer;outline:none}
+.f-sel:focus{border-color:var(--pri)}
+.f-inp{background:var(--surf);border:1px solid var(--brd);color:var(--txt);padding:7px 12px;border-radius:8px;font-family:'Nunito';font-size:13px;outline:none;min-width:200px}
+.f-inp:focus{border-color:var(--pri)}.f-inp::placeholder{color:var(--mut)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.overlay.on{display:flex}
+.modal{background:var(--surf);border:1px solid var(--brd);border-radius:14px;width:100%;max-width:720px;max-height:92vh;overflow-y:auto;box-shadow:var(--sh)}
+.modal-wide{max-width:900px}
+.m-head{padding:20px 24px 16px;border-bottom:1px solid var(--brd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surf);z-index:1}
+.m-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
+.m-body{padding:24px}
+.m-foot{padding:16px 24px;border-top:1px solid var(--brd);display:flex;gap:10px;justify-content:flex-end}
+.close-btn{background:none;border:none;color:var(--mut);font-size:22px;cursor:pointer;padding:2px 6px;border-radius:4px;line-height:1}
+.close-btn:hover{color:var(--txt);background:var(--surf2)}
+.fg{margin-bottom:16px}
+.flbl{display:block;font-size:11px;font-weight:700;color:var(--mut);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.finp,.fta,.fsel{width:100%;background:var(--surf2);border:1px solid var(--brd);color:var(--txt);padding:9px 12px;border-radius:8px;font-family:'Nunito';font-size:14px;outline:none;transition:border-color .15s}
+.finp:focus,.fta:focus,.fsel:focus{border-color:var(--pri)}
+.fta{resize:vertical;min-height:80px;line-height:1.5}
+.fsel{cursor:pointer}
+.upload-zone{border:2px dashed var(--brd);border-radius:var(--r);padding:52px 24px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover,.upload-zone.over{border-color:var(--pri);background:var(--pri-dim)}
+.u-icon{font-size:52px;margin-bottom:14px;display:block}
+.u-txt{font-size:15px;color:var(--mut)}.u-txt strong{color:var(--pri)}
+.quiz-wrap{max-width:820px;margin:0 auto}
+.quiz-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--brd)}
+.timer{font-family:'JetBrains Mono';font-size:26px;font-weight:500;color:var(--pri)}
+.timer.warn{color:var(--warn)}.timer.dng{color:var(--err);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.prog-dots{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:20px}
+.pd{width:26px;height:26px;border-radius:50%;background:var(--surf2);border:1px solid var(--brd);cursor:pointer;font-size:10px;font-family:'JetBrains Mono';display:flex;align-items:center;justify-content:center;color:var(--mut);transition:all .1s}
+.pd.cur{border-color:var(--pri);color:var(--pri);background:var(--pri-dim)}
+.pd.ans{background:var(--pri);color:#000;border-color:var(--pri)}
+.pd.mrk{background:var(--sec-dim);border-color:var(--sec);color:var(--sec)}
+.q-num{font-family:'JetBrains Mono';font-size:12px;color:var(--mut);margin-bottom:10px}
+.q-body{font-size:15px;line-height:1.75;margin-bottom:24px;white-space:pre-wrap}
+.alts{display:flex;flex-direction:column;gap:10px}
+.alt{background:var(--surf);border:1.5px solid var(--brd);border-radius:8px;padding:13px 16px;cursor:pointer;transition:all .15s;display:flex;gap:12px;align-items:flex-start;font-size:14px;line-height:1.55;text-align:left;width:100%;color:var(--txt);font-family:'Nunito'}
+.alt:hover{border-color:var(--acc);background:var(--surf2)}
+.alt.sel{border-color:var(--pri);background:var(--pri-dim)}
+.alt.ok{border-color:var(--ok);background:rgba(63,185,80,.15)}
+.alt.ng{border-color:var(--err);background:rgba(248,81,73,.15)}
+.alt-l{font-family:'JetBrains Mono';font-weight:500;font-size:13px;min-width:20px;color:var(--mut);flex-shrink:0}
+.alt.sel .alt-l{color:var(--pri)}.alt.ok .alt-l{color:var(--ok)}.alt.ng .alt-l{color:var(--err)}
+.comment-box{background:var(--surf2);border:1px solid var(--brd);border-radius:8px;padding:16px;margin-top:20px;font-size:13.5px;line-height:1.65;color:var(--txt)}
+.comment-box strong{color:var(--sec);display:block;margin-bottom:6px;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.quiz-actions{display:flex;gap:10px;margin-top:24px;align-items:center}
+.result-center{text-align:center;padding:40px 20px}
+.res-score{font-family:'JetBrains Mono';font-size:80px;font-weight:500;line-height:1}
+.res-lbl{font-size:16px;color:var(--mut);margin-top:8px}
+.res-grade{font-family:'Syne';font-size:28px;font-weight:800;margin-top:16px}
+.fc-wrap{perspective:1000px;height:280px;cursor:pointer;max-width:580px;margin:0 auto}
+.fc-inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.fc-wrap.flipped .fc-inner{transform:rotateY(180deg)}
+.fc-side{position:absolute;inset:0;background:var(--surf);border:1px solid var(--brd);border-radius:14px;padding:32px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;backface-visibility:hidden}
+.fc-back{transform:rotateY(180deg);border-color:var(--pri);background:linear-gradient(135deg,var(--surf) 0%,var(--pri-dim) 100%)}
+.fc-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--mut);margin-bottom:14px;font-weight:700}
+.fc-txt{font-size:17px;line-height:1.55;font-weight:600}
+.fc-hint{font-size:12px;color:var(--mut);margin-top:16px}
+.pbar{height:6px;background:var(--surf2);border-radius:3px;overflow:hidden}
+.pfill{height:100%;background:var(--pri);border-radius:3px;transition:width .3s}
+.pfill.y{background:var(--sec)}.pfill.r{background:var(--err)}
+.cov-item{margin-bottom:12px}
+.cov-lbl{display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px}
+.cov-cnt{font-family:'JetBrains Mono';font-size:12px;color:var(--mut)}
+.tabs{display:flex;gap:4px;background:var(--surf2);padding:4px;border-radius:10px;margin-bottom:20px;width:fit-content}
+.tab{padding:7px 16px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;color:var(--mut);transition:all .15s}
+.tab.on{background:var(--surf);color:var(--txt);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.empty{text-align:center;padding:64px 20px;color:var(--mut)}
+.empty-ico{font-size:52px;margin-bottom:14px;opacity:.4;display:block}
+.empty-ttl{font-size:16px;font-weight:700;color:var(--txt);margin-bottom:6px}
+.empty-dsc{font-size:13px;line-height:1.6}
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:32px;color:var(--mut)}
+.spin{width:22px;height:22px;border:2px solid var(--brd);border-top-color:var(--pri);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-big{padding:80px 20px;flex-direction:column;gap:16px}
+.loading-big .spin{width:40px;height:40px;border-width:3px}
+.loading-txt{font-size:15px;font-weight:600}
+.loading-sub{font-size:13px;color:var(--mut)}
+.toast-cont{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surf);border:1px solid var(--brd);border-radius:10px;padding:12px 16px;font-size:13px;font-weight:600;box-shadow:var(--sh);animation:toastIn .2s ease;display:flex;align-items:center;gap:8px;min-width:240px}
+.toast.ok{border-left:3px solid var(--ok)}.toast.err{border-left:3px solid var(--err)}.toast.info{border-left:3px solid var(--acc)}
+@keyframes toastIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+.note{background:var(--surf2);border:1px solid var(--brd);border-radius:8px;padding:12px 16px;font-size:13px;color:var(--mut);display:flex;gap:10px;align-items:flex-start}
+.note.info{border-left:3px solid var(--acc)}.note.warn{border-left:3px solid var(--warn)}.note.ok{border-left:3px solid var(--ok)}
+/* TELA DE CARREGAMENTO INICIAL */
+#init-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+#init-screen .logo-mark{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--pri)}
+#init-screen .spin{width:36px;height:36px;border-width:3px}
+#init-screen .init-msg{font-size:14px;color:var(--mut)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--brd);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--mut)}
+@media(max-width:820px){
+  :root{--sw:58px}
+  .nav-item span,.nav-sec,.logo-sub,.logo-mark span,.sidebar-stats{display:none}
+  .logo-mark{font-size:16px}.g4{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr}
+  .content{padding:16px}.topbar{padding:12px 16px}
+}
+@media(max-width:560px){.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- TELA DE CARREGAMENTO INICIAL -->
+<div id="init-screen">
+  <div class="logo-mark">StudyPRO</div>
+  <div class="spin"></div>
+  <div class="init-msg" id="init-msg">Conectando ao Firebase...</div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">Study<span>PRO</span></div>
+    <div class="logo-sub">Petrobras · CESGRANRIO</div>
+    <div class="fb-badge">🔥 Firebase</div>
+  </div>
+  <div class="nav">
+    <div class="nav-sec">Principal</div>
+    <div class="nav-item active" onclick="go('dashboard')"><span class="ico">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="go('banco')"><span class="ico">🗄️</span><span>Banco de Questões</span><span class="nav-badge" id="nb-total">0</span></div>
+    <div class="nav-item" onclick="go('upload')"><span class="ico">📤</span><span>Upload PDF</span></div>
+    <div class="nav-sec">Estudar</div>
+    <div class="nav-item" onclick="go('simulado')"><span class="ico">📝</span><span>Simulado</span></div>
+    <div class="nav-item" onclick="go('revisao')"><span class="ico">🔁</span><span>Revisão de Erros</span><span class="nav-badge" id="nb-erros" style="background:var(--err)">0</span></div>
+    <div class="nav-item" onclick="go('flashcards')"><span class="ico">🃏</span><span>Flashcards</span></div>
+    <div class="nav-sec">Análise</div>
+    <div class="nav-item" onclick="go('desempenho')"><span class="ico">📈</span><span>Desempenho</span></div>
+    <div class="nav-item" onclick="go('cobertura')"><span class="ico">🗺️</span><span>Cobertura</span></div>
+    <div class="nav-sec">Sistema</div>
+    <div class="nav-item" onclick="go('config')"><span class="ico">⚙️</span><span>Configurações</span></div>
+  </div>
+  <div class="sidebar-stats">
+    <div class="ss-grid">
+      <div class="ss-card"><div class="ss-num" id="ss-q">0</div><div class="ss-lbl">Questões</div></div>
+      <div class="ss-card"><div class="ss-num" id="ss-s">0</div><div class="ss-lbl">Simulados</div></div>
+    </div>
+    <div class="sync-indicator">
+      <div class="sync-dot ok" id="sync-dot"></div>
+      <span id="sync-txt">Sincronizado</span>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Dashboard</div>
+    <div class="topbar-actions" id="topbar-actions"></div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="g4 mb16" id="dash-stats"></div>
+      <div class="g2">
+        <div class="card"><div class="card-title">📊 Desempenho por Disciplina</div><canvas id="chart-disc" height="200"></canvas></div>
+        <div class="card"><div class="card-title">📅 Últimos Simulados</div><div id="dash-sims"></div></div>
+      </div>
+      <div class="g2 mt16">
+        <div class="card"><div class="card-title">🔥 Tópicos para Melhorar</div><div id="dash-weak"></div></div>
+        <div class="card"><div class="card-title">⚡ Ações Rápidas</div><div id="dash-actions" class="flex flex-col gap8"></div></div>
+      </div>
+    </div>
+
+    <!-- BANCO -->
+    <div id="view-banco" class="view">
+      <div class="filters">
+        <input class="f-inp" id="f-search" placeholder="🔍 Buscar questão..." oninput="renderBanco()">
+        <select class="f-sel" id="f-disc" onchange="renderBanco()"><option value="">Todas disciplinas</option></select>
+        <select class="f-sel" id="f-top" onchange="renderBanco()"><option value="">Todos tópicos</option></select>
+        <select class="f-sel" id="f-dif" onchange="renderBanco()">
+          <option value="">Dificuldade</option><option value="facil">Fácil</option><option value="media">Média</option><option value="dificil">Difícil</option>
+        </select>
+        <select class="f-sel" id="f-erros" onchange="renderBanco()">
+          <option value="">Todas</option><option value="erros">Com erros</option><option value="sem-erros">Sem erros</option>
+        </select>
+      </div>
+      <div id="banco-count" class="mb8" style="color:var(--mut);font-size:13px"></div>
+      <div id="banco-list"></div>
+      <div id="banco-pagination" class="flex ac gap8 mt16"></div>
+    </div>
+
+    <!-- UPLOAD -->
+    <div id="view-upload" class="view">
+      <div class="g2">
+        <div>
+          <div class="note info mb16">💡 <span>O <strong>Gemini</strong> extrai questões automaticamente dos PDFs. Configure sua chave do Google AI Studio em <strong>Configurações</strong>.</span></div>
+          <div class="upload-zone" id="drop-zone" onclick="document.getElementById('pdfInput').click()">
+            <span class="u-icon">📄</span>
+            <div class="u-txt">Arraste um PDF ou <strong>clique para selecionar</strong></div>
+            <div style="margin-top:8px;font-size:12px;color:var(--mut)">Arquivos de questões CESGRANRIO</div>
+          </div>
+          <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="handlePDF(this)">
+          <div id="upload-status" class="mt16"></div>
+          <div id="upload-preview" class="mt16"></div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-title">✏️ Adicionar Manualmente</div>
+            <div class="fg"><label class="flbl">Disciplina</label><select class="fsel" id="m-disc" onchange="updateTopicosManual()"><option value="">Selecione...</option></select></div>
+            <div class="fg"><label class="flbl">Tópico</label><select class="fsel" id="m-top"><option value="">Selecione...</option></select></div>
+            <div class="fg"><label class="flbl">Enunciado</label><textarea class="fta" id="m-enun" rows="4" placeholder="Digite o enunciado..."></textarea></div>
+            <label class="flbl">Alternativas</label>
+            <div id="m-alts"></div>
+            <div class="fg mt8"><label class="flbl">Gabarito</label><select class="fsel" id="m-gab"><option>A</option><option>B</option><option>C</option><option>D</option><option>E</option></select></div>
+            <div class="fg"><label class="flbl">Comentário</label><textarea class="fta" id="m-com" rows="2" placeholder="Explicação..."></textarea></div>
+            <div class="fg"><label class="flbl">Dificuldade</label><select class="fsel" id="m-dif"><option value="media">Média</option><option value="facil">Fácil</option><option value="dificil">Difícil</option></select></div>
+            <div class="fg"><label class="flbl">Fonte</label><input class="finp" id="m-fonte" placeholder="Ex: CESGRANRIO 2023"></div>
+            <button class="btn btn-pri" onclick="addManual()">➕ Adicionar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIMULADO -->
+    <div id="view-simulado" class="view">
+      <div id="sim-config">
+        <div class="card" style="max-width:600px;margin:0 auto">
+          <div class="card-title">📝 Configurar Simulado</div>
+          <div class="fg"><label class="flbl">Disciplina</label><select class="fsel" id="sc-disc" onchange="updateSimTopicos()"><option value="">Todas</option></select></div>
+          <div class="fg"><label class="flbl">Tópico</label><select class="fsel" id="sc-top"><option value="">Todos</option></select></div>
+          <div class="fg"><label class="flbl">Dificuldade</label><select class="fsel" id="sc-dif"><option value="">Todas</option><option value="facil">Fácil</option><option value="media">Média</option><option value="dificil">Difícil</option></select></div>
+          <div class="fg"><label class="flbl">Quantidade de questões</label><input class="finp" type="number" id="sc-qtd" value="10" min="1" max="100"></div>
+          <div class="fg"><label class="flbl">Tempo por questão (min, 0 = sem limite)</label><input class="finp" type="number" id="sc-tempo" value="3" min="0" max="10"></div>
+          <div class="fg"><label class="flbl">Modo</label><select class="fsel" id="sc-modo"><option value="normal">Normal</option><option value="revisao">Apenas erros anteriores</option><option value="cesgranrio">Estilo CESGRANRIO</option></select></div>
+          <div id="sim-avail" class="note info mb16" style="display:none"></div>
+          <button class="btn btn-pri btn-lg" onclick="startSim()">🚀 Iniciar Simulado</button>
+        </div>
+      </div>
+      <div id="sim-quiz" style="display:none">
+        <div class="quiz-wrap">
+          <div class="quiz-hd">
+            <div><div style="font-size:12px;color:var(--mut);margin-bottom:2px">SIMULADO EM ANDAMENTO</div><div id="sim-info" style="font-size:14px;font-weight:600"></div></div>
+            <div class="flex ac gap16"><div class="timer" id="sim-timer">--:--</div><button class="btn btn-ghost btn-sm" onclick="if(confirm('Encerrar?'))finishSim(true)">Encerrar</button></div>
+          </div>
+          <div class="prog-dots" id="prog-dots"></div>
+          <div id="quiz-body"></div>
+          <div class="quiz-actions" id="quiz-actions"></div>
+        </div>
+      </div>
+      <div id="sim-result" style="display:none">
+        <div class="quiz-wrap">
+          <div class="result-center card mb16">
+            <div id="res-score" class="res-score"></div>
+            <div class="res-lbl">questões corretas</div>
+            <div id="res-grade" class="res-grade mt16"></div>
+            <div id="res-stats" class="flex ac gap16 mt16" style="justify-content:center;flex-wrap:wrap"></div>
+          </div>
+          <div class="flex gap8 mb16" style="flex-wrap:wrap">
+            <button class="btn btn-pri" onclick="showView('simulado')">🔄 Novo Simulado</button>
+            <button class="btn btn-ghost" onclick="go('desempenho')">📈 Ver Desempenho</button>
+          </div>
+          <div id="res-review"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVISÃO -->
+    <div id="view-revisao" class="view"><div id="rev-content"></div></div>
+
+    <!-- FLASHCARDS -->
+    <div id="view-flashcards" class="view">
+      <div id="fc-config">
+        <div class="card" style="max-width:540px;margin:0 auto">
+          <div class="card-title">🃏 Flashcards</div>
+          <div class="fg"><label class="flbl">Disciplina</label><select class="fsel" id="fc-disc"><option value="">Todos os tópicos</option></select></div>
+          <div class="fg"><label class="flbl">Fonte</label><select class="fsel" id="fc-fonte"><option value="topicos">Tópicos do conteúdo programático</option><option value="questoes">Baseado nas questões do banco</option></select></div>
+          <button class="btn btn-pri btn-lg mt8" onclick="startFC()">🎴 Iniciar</button>
+        </div>
+      </div>
+      <div id="fc-study" style="display:none">
+        <div style="max-width:620px;margin:0 auto">
+          <div class="flex ac jb mb16"><div id="fc-prog" style="font-size:13px;color:var(--mut)"></div><button class="btn btn-ghost btn-sm" onclick="endFC()">✕ Encerrar</button></div>
+          <div class="fc-wrap" id="fc-card" onclick="flipFC()">
+            <div class="fc-inner">
+              <div class="fc-side"><div class="fc-lbl">TÓPICO</div><div class="fc-txt" id="fc-front"></div><div class="fc-hint">Clique para ver a definição</div></div>
+              <div class="fc-side fc-back"><div class="fc-lbl">DEFINIÇÃO / CONCEITO</div><div class="fc-txt" id="fc-back"></div></div>
+            </div>
+          </div>
+          <div class="flex ac gap8 mt20" style="justify-content:center">
+            <button class="btn btn-danger" onclick="rateFC(false)">✕ Não sei</button>
+            <button class="btn btn-ghost" onclick="nextFC()">→ Pular</button>
+            <button class="btn btn-pri" onclick="rateFC(true)">✓ Sei!</button>
+          </div>
+          <div id="fc-score-bar" class="mt16">
+            <div class="flex ac jb mb4"><span style="font-size:12px;color:var(--mut)">Progresso</span><span id="fc-pct" style="font-size:12px;color:var(--mut);font-family:'JetBrains Mono'"></span></div>
+            <div class="pbar"><div class="pfill" id="fc-bar"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DESEMPENHO -->
+    <div id="view-desempenho" class="view">
+      <div class="g4 mb16" id="desemp-stats"></div>
+      <div class="g2 mb16">
+        <div class="card"><div class="card-title">📅 Evolução ao Longo do Tempo</div><canvas id="chart-evolucao" height="200"></canvas></div>
+        <div class="card"><div class="card-title">🎯 Acertos por Dificuldade</div><canvas id="chart-dif" height="200"></canvas></div>
+      </div>
+      <div class="card mb16"><div class="card-title">📚 Acertos por Disciplina</div><canvas id="chart-disc2" height="120"></canvas></div>
+      <div class="card"><div class="card-title">📋 Histórico de Simulados</div><div id="hist-sims"></div></div>
+    </div>
+
+    <!-- COBERTURA -->
+    <div id="view-cobertura" class="view">
+      <div class="note warn mb16">📌 <span>Tópicos em vermelho precisam de mais questões.</span></div>
+      <div id="cov-content"></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="view-config" class="view">
+      <div style="max-width:600px">
+        <div class="card mb16">
+          <div class="card-title">🔑 Chave da API Gemini (Google AI Studio)</div>
+          <div class="note warn mb16">⚠️ <span>Necessária para extração automática de PDFs. <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--acc)">Obter chave →</a></span></div>
+          <div class="fg"><label class="flbl">API Key</label><input class="finp" type="password" id="api-key-inp" placeholder="AIza..."></div>
+          <button class="btn btn-pri" onclick="saveConfig()">💾 Salvar</button>
+          <span id="cfg-status" style="margin-left:12px;font-size:13px"></span>
+        </div>
+        <div class="card mb16">
+          <div class="card-title">🔥 Status do Firebase</div>
+          <div id="fb-status-card"></div>
+        </div>
+        <div class="card mb16">
+          <div class="card-title">📦 Backup Local (JSON)</div>
+          <div class="note info mb16">💡 <span>Seus dados já estão na nuvem via Firebase. O JSON é um backup extra de segurança.</span></div>
+          <div class="flex gap8 fw">
+            <button class="btn btn-sec" onclick="exportJSON()">💾 Exportar JSON</button>
+            <button class="btn btn-sec" onclick="document.getElementById('importFile').click()">📂 Importar JSON</button>
+            <button class="btn btn-danger" onclick="clearAll()">🗑️ Apagar Tudo</button>
+          </div>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(this)">
+        </div>
+        <div class="card">
+          <div class="card-title">ℹ️ Sobre</div>
+          <div style="font-size:13px;color:var(--mut);line-height:1.8">
+            <div><strong style="color:var(--txt)">StudyPRO</strong> — Petrobras · CESGRANRIO</div>
+            <div>Banco de dados: <strong style="color:#ffa000">🔥 Firebase Realtime Database</strong></div>
+            <div>Parser de PDF: <strong style="color:var(--acc)">Gemini 1.5 Flash</strong></div>
+            <div class="mt8">Hospedagem gratuita: <a href="https://netlify.com" target="_blank" style="color:var(--acc)">netlify.com</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast-cont" id="toasts"></div>
+
+<!-- MODAL: VER QUESTÃO -->
+<div class="overlay" id="modal-q">
+  <div class="modal">
+    <div class="m-head"><div class="m-title">Questão</div><button class="close-btn" onclick="closeModal('modal-q')">×</button></div>
+    <div class="m-body" id="modal-q-body"></div>
+    <div class="m-foot" id="modal-q-foot"></div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR QUESTÃO -->
+<div class="overlay" id="modal-edit">
+  <div class="modal">
+    <div class="m-head"><div class="m-title">Editar Questão</div><button class="close-btn" onclick="closeModal('modal-edit')">×</button></div>
+    <div class="m-body" id="modal-edit-body"></div>
+    <div class="m-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-edit')">Cancelar</button>
+      <button class="btn btn-pri" onclick="saveEdit()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: IMPORT PREVIEW -->
+<div class="overlay" id="modal-import">
+  <div class="modal modal-wide">
+    <div class="m-head"><div class="m-title" id="imp-title">Questões Extraídas</div><button class="close-btn" onclick="closeModal('modal-import')">×</button></div>
+    <div class="m-body" id="imp-body"></div>
+    <div class="m-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-import')">Cancelar</button>
+      <button class="btn btn-pri" id="imp-save-btn">✅ Confirmar e Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// FIREBASE CONFIG
+// ============================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyB83p08TIQxkLf1iNatda1UAKbzlN7Fn8M",
+  authDomain: "studypro-petrobras.firebaseapp.com",
+  projectId: "studypro-petrobras",
+  storageBucket: "studypro-petrobras.firebasestorage.app",
+  messagingSenderId: "335207961749",
+  appId: "1:335207961749:web:5dc1bfdc139f45ad4d379c",
+  measurementId: "G-FGVVL2XKFJ",
+  databaseURL: "https://studypro-petrobras-default-rtdb.firebaseio.com"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ============================================================
+// CONTEÚDO PROGRAMÁTICO
+// ============================================================
+const CP = {
+  "Língua Portuguesa":["Compreensão e interpretação de textos","Tipos e gêneros textuais","Ortografia oficial","Coesão textual – Referenciação e conectores","Coesão textual – Tempos e modos verbais","Classes de palavras","Coordenação e subordinação","Pontuação","Concordância verbal e nominal","Regência verbal e nominal","Crase","Colocação pronominal","Significação das palavras","Reescrita e substituição"],
+  "Língua Inglesa":["Compreensão de textos em inglês","Gramática contextual"],
+  "Redes de Computadores":["Topologias e equipamentos","QoS e Modelo OSI","TCP/IP e protocolos de aplicação","DNS, DHCP, FTP, HTTP, SMTP, SSH","IPSEC, SNMP, NAT, LDAP","IPv6"],
+  "UNIX/Linux":["Instalação e suporte TCP/IP","DHCP, DNS, NIS, CIFS, NFS","Servidor Apache","Integração com Windows","Linguagens de Script"],
+  "Windows":["TCP/IP, DHCP, DNS","Active Directory, IIS, Terminal Services","Serviços de arquivo e impressão","Integração com Unix","Linguagens de Script"],
+  "Gerência de Projetos":["Ciclo de vida do sistema","Conceitos e objetivos","Escopo de projeto","Planejamento","Diagrama de rede e caminho crítico","Execução e controle","Encerramento","Metodologias e ferramentas"],
+  "Segurança da Informação I":["Segurança física e lógica","Firewall, Proxy, IPS/IDS","SIEM, EDR, WAF, DLP, CASB","Malwares (ransomware, vírus, worms)","Ataques (DDoS, SQLi, XSS, CSRF)","Desenvolvimento seguro (SAST/DAST)","VPN, MDM, SSO, MFA","IAM, RBAC, ABAC"],
+  "Storage e Virtualização":["NAS e SAN","Introdução à virtualização","Formas de virtualização","Virtualização de rede","Virtualização de armazenamento"],
+  "Alto Desempenho":["Concorrência e paralelismo","Cluster e Grid","Balanceamento de carga","DevOps","Contêineres e Docker","Microsserviços","Infraestrutura como código"],
+  "Computação em Nuvem":["Conceitos e benefícios","Alta disponibilidade e escalabilidade","Arquitetura em nuvem","Identidade e segurança na nuvem","Gestão de custos"],
+  "ITIL/COBIT":["ITIL v3 – Ciclo de Vida","Transição e Operação de Serviços","COBIT 4.1 – Entrega de Serviço"],
+  "Segurança da Informação II":["NIST SP 800-61","Threat Intel e Threat Hunting","Testes de penetração","MITRE ATT&CK","ISO 31000 e ISO 22301","ISO 27002 e criptografia","Certificação e assinatura digital","Segurança em nuvem e IoT"],
+  "Banco de Dados":["Independência de dados","Modelo relacional","Modelagem entidade-relacionamento","Triggers e stored procedures","Linguagem SQL","Alta disponibilidade","Gerência de transações e bloqueios","Desempenho"],
+  "Programação":["Algoritmos e estruturas de dados","Depuração em Java","Engenharia de software","HTML e XML","Java (JEE, Servlets, JSP, EJB)"],
+  "Raciocínio Lógico":["Lógica sentencial","Lógica de predicados","Conectivos lógicos","Argumentos","Sistemas dedutivos","Decidibilidade","Valores-verdade"]
+};
+
+// ============================================================
+// ESTADO LOCAL (cache em memória)
+// ============================================================
+let DATA = { questions:{}, simulados:{}, config:{geminiKey:''} };
+let fbReady = false;
+let currentView = 'dashboard';
+
+// ============================================================
+// FIREBASE — LEITURA / ESCRITA
+// ============================================================
+function setSyncStatus(state, msg) {
+  const dot = $('sync-dot'), txt = $('sync-txt');
+  if(!dot||!txt) return;
+  dot.className = 'sync-dot ' + state;
+  txt.textContent = msg;
+}
+
+async function fbSet(path, value) {
+  setSyncStatus('syncing','Sincronizando...');
+  try {
+    await db.ref(path).set(value);
+    setSyncStatus('ok','Sincronizado');
+  } catch(e) {
+    setSyncStatus('err','Erro ao salvar');
+    toast('Erro Firebase: '+e.message,'err');
+    throw e;
+  }
+}
+
+async function fbRemove(path) {
+  setSyncStatus('syncing','Sincronizando...');
+  try {
+    await db.ref(path).remove();
+    setSyncStatus('ok','Sincronizado');
+  } catch(e) {
+    setSyncStatus('err','Erro ao remover');
+    toast('Erro Firebase: '+e.message,'err');
+    throw e;
+  }
+}
+
+// Escuta em tempo real para questões, simulados e config
+function setupListeners() {
+  db.ref('studypro/questions').on('value', snap => {
+    DATA.questions = snap.val() || {};
+    updateSidebar();
+    if(currentView==='banco') renderBancoList();
+    if(currentView==='dashboard') renderDashboard();
+    if(currentView==='cobertura') renderCobertura();
+  });
+
+  db.ref('studypro/simulados').on('value', snap => {
+    DATA.simulados = snap.val() || {};
+    updateSidebar();
+    if(currentView==='desempenho') renderDesempenho();
+    if(currentView==='dashboard') renderDashboard();
+  });
+
+  db.ref('studypro/config').on('value', snap => {
+    DATA.config = snap.val() || {geminiKey:''};
+    if($('api-key-inp')) $('api-key-inp').value = DATA.config.geminiKey||'';
+  });
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function $(id){ return document.getElementById(id); }
+function toast(msg, type='info'){
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  const ico={ok:'✅',err:'❌',info:'ℹ️'}[type]||'ℹ️';
+  t.innerHTML=`<span>${ico}</span><span>${msg}</span>`;
+  $('toasts').appendChild(t);
+  setTimeout(()=>t.remove(),3200);
+}
+function closeModal(id){ $(id).classList.remove('on'); }
+function openModal(id){ $(id).classList.add('on'); }
+function difBadge(d){ const m={facil:'Fácil',media:'Média',dificil:'Difícil'}; const c={facil:'dif-facil',media:'dif-media',dificil:'dif-dificil'}; return `<span class="badge ${c[d]||'bm'}">${m[d]||d||'—'}</span>`; }
+function discBadge(d){ return `<span class="badge bb">${d||'—'}</span>`; }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function getQList(){ return Object.values(DATA.questions||{}); }
+function getSimList(){ return Object.values(DATA.simulados||{}); }
+function getQ(id){ return (DATA.questions||{})[id]; }
+function getErrors(){
+  const errs=new Set();
+  getSimList().forEach(s=>{ Object.keys(s.respostas||{}).forEach(id=>{ if(s.respostas[id]!==getQ(id)?.gabarito) errs.add(id); }); });
+  return [...errs];
+}
+
+// ============================================================
+// ROUTER
+// ============================================================
+const TITLES={dashboard:'Dashboard',banco:'Banco de Questões',upload:'Upload de PDF',simulado:'Simulado',revisao:'Revisão de Erros',flashcards:'Flashcards',desempenho:'Desempenho',cobertura:'Cobertura',config:'Configurações'};
+
+function go(v){
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  const el=$(`view-${v}`); if(el) el.classList.add('active');
+  const ni=document.querySelector(`.nav-item[onclick="go('${v}')"]`); if(ni) ni.classList.add('active');
+  $('page-title').textContent=TITLES[v]||v;
+  currentView=v;
+  if(v==='dashboard') renderDashboard();
+  else if(v==='banco') renderBanco();
+  else if(v==='upload') setupUpload();
+  else if(v==='simulado') setupSimConfig();
+  else if(v==='revisao') renderRevisao();
+  else if(v==='flashcards') setupFC();
+  else if(v==='desempenho') renderDesempenho();
+  else if(v==='cobertura') renderCobertura();
+  else if(v==='config') loadConfig();
+}
+function showView(v){ go(v); }
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+function updateSidebar(){
+  const total=getQList().length;
+  const errs=getErrors().length;
+  $('nb-total').textContent=total;
+  $('nb-erros').textContent=errs;
+  $('ss-q').textContent=total;
+  $('ss-s').textContent=getSimList().length;
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+let chartDisc=null;
+function renderDashboard(){
+  const qs=getQList(); const sims=getSimList();
+  const avgAcerto=sims.length?Math.round(sims.reduce((a,s)=>a+(s.acertos/Math.max(s.total,1))*100,0)/sims.length):0;
+  const errs=getErrors().length;
+
+  $('dash-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${qs.length}</div><div class="stat-lbl">Questões no Banco</div><div class="stat-sub">🔥 Firebase</div></div>
+    <div class="stat-card y"><div class="stat-val">${sims.length}</div><div class="stat-lbl">Simulados Realizados</div></div>
+    <div class="stat-card b"><div class="stat-val">${avgAcerto}%</div><div class="stat-lbl">Taxa de Acerto Média</div></div>
+    <div class="stat-card r"><div class="stat-val">${errs}</div><div class="stat-lbl">Questões com Erro</div></div>`;
+
+  const byDisc={};
+  qs.forEach(q=>{byDisc[q.disciplina]=(byDisc[q.disciplina]||0)+1;});
+  const dLabels=Object.keys(byDisc).slice(0,8);
+  if(chartDisc) chartDisc.destroy();
+  const ctx=$('chart-disc').getContext('2d');
+  chartDisc=new Chart(ctx,{type:'bar',data:{labels:dLabels,datasets:[{data:dLabels.map(d=>byDisc[d]),backgroundColor:'rgba(0,200,83,.6)',borderColor:'rgba(0,200,83,1)',borderWidth:1,borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7a99',font:{size:11}},grid:{color:'#2a3347'}},y:{ticks:{color:'#6b7a99'},grid:{color:'#2a3347'}}}}});
+
+  if(!sims.length){
+    $('dash-sims').innerHTML='<div class="empty" style="padding:20px"><span class="empty-ico">📝</span><div class="empty-ttl">Nenhum simulado ainda</div></div>';
+  } else {
+    $('dash-sims').innerHTML=sims.slice(-5).reverse().map(s=>{
+      const pct=Math.round((s.acertos/Math.max(s.total,1))*100);
+      const col=pct>=70?'var(--ok)':pct>=50?'var(--warn)':'var(--err)';
+      return `<div class="flex ac jb" style="padding:8px 0;border-bottom:1px solid var(--brd)">
+        <div><div style="font-size:13px;font-weight:600">${s.config?.disciplina||'Geral'}</div><div style="font-size:11px;color:var(--mut)">${new Date(s.createdAt).toLocaleDateString('pt-BR')}</div></div>
+        <div style="font-family:'JetBrains Mono';font-size:18px;color:${col}">${pct}%</div></div>`;
+    }).join('');
+  }
+
+  const topErr={};
+  getSimList().forEach(s=>Object.keys(s.respostas||{}).forEach(id=>{const q=getQ(id);if(q&&s.respostas[id]!==q.gabarito)topErr[q.topico||q.disciplina]=(topErr[q.topico||q.disciplina]||0)+1;}));
+  const sorted=Object.entries(topErr).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $('dash-weak').innerHTML=sorted.length?sorted.map(([t,n])=>`<div class="flex ac jb" style="padding:7px 0;border-bottom:1px solid var(--brd)"><span style="font-size:13px">${t}</span><span class="badge br">${n} erros</span></div>`).join(''):'<div style="color:var(--mut);font-size:13px;padding:16px 0">Faça simulados para ver seus pontos fracos!</div>';
+
+  $('dash-actions').innerHTML=`
+    <button class="btn btn-pri" onclick="go('simulado')">📝 Iniciar Simulado</button>
+    <button class="btn btn-sec" onclick="go('banco')">🗄️ Ver Banco de Questões</button>
+    <button class="btn btn-sec" onclick="go('upload')">📤 Adicionar Questões</button>
+    <button class="btn btn-sec" onclick="go('flashcards')">🃏 Estudar Flashcards</button>
+    ${errs?`<button class="btn btn-warn" onclick="go('revisao')">🔁 Revisar ${errs} Erros</button>`:''}`;
+}
+
+// ============================================================
+// BANCO
+// ============================================================
+let bancoPg=1; const PER_PAGE=15;
+function renderBanco(){
+  bancoPg=1;
+  const qs=getQList();
+  const discs=[...new Set(qs.map(q=>q.disciplina).filter(Boolean))].sort();
+  const fd=$('f-disc'); const curD=fd.value;
+  fd.innerHTML='<option value="">Todas disciplinas</option>'+discs.map(d=>`<option value="${d}" ${d===curD?'selected':''}>${d}</option>`).join('');
+  renderBancoList();
+}
+function renderBancoList(){
+  let qs=getQList();
+  const s=$('f-search').value.toLowerCase();
+  const d=$('f-disc').value;
+  const t=$('f-top').value;
+  const dif=$('f-dif').value;
+  const fe=$('f-erros').value;
+  const errs=new Set(getErrors());
+  if(s) qs=qs.filter(q=>(q.enunciado+q.disciplina+q.topico).toLowerCase().includes(s));
+  if(d) qs=qs.filter(q=>q.disciplina===d);
+  if(t) qs=qs.filter(q=>q.topico===t);
+  if(dif) qs=qs.filter(q=>q.dificuldade===dif);
+  if(fe==='erros') qs=qs.filter(q=>errs.has(q.id));
+  if(fe==='sem-erros') qs=qs.filter(q=>!errs.has(q.id));
+
+  // Update topicos filter
+  const allTops=[...new Set(getQList().filter(q=>!d||q.disciplina===d).map(q=>q.topico).filter(Boolean))].sort();
+  const ft=$('f-top'); const curT=ft.value;
+  ft.innerHTML='<option value="">Todos tópicos</option>'+allTops.map(t2=>`<option value="${t2}" ${t2===curT?'selected':''}>${t2}</option>`).join('');
+
+  const total=qs.length;
+  $('banco-count').textContent=`${total} questão${total!==1?'s':''} encontrada${total!==1?'s':''}`;
+  const start=(bancoPg-1)*PER_PAGE;
+  const page=qs.slice(start,start+PER_PAGE);
+  if(!total){
+    $('banco-list').innerHTML=`<div class="empty"><span class="empty-ico">🔍</span><div class="empty-ttl">Nenhuma questão encontrada</div><div class="empty-dsc">Ajuste os filtros ou adicione questões via Upload</div></div>`;
+    $('banco-pagination').innerHTML=''; return;
+  }
+  $('banco-list').innerHTML=page.map(q=>`
+    <div class="q-card">
+      <div class="q-meta">${discBadge(q.disciplina)}${q.topico?`<span class="badge bm">${q.topico}</span>`:''}${difBadge(q.dificuldade)}${errs.has(q.id)?'<span class="badge br">⚠ Com erro</span>':''}${q.anotacao?'<span class="badge by">📌</span>':''}<span style="margin-left:auto;font-size:11px;color:var(--mut);font-family:'JetBrains Mono'">${q.fonte||''}</span></div>
+      <div class="q-text">${q.enunciado}</div>
+      <div class="q-actions">
+        <button class="btn btn-sec btn-sm" onclick="viewQ('${q.id}')">👁 Ver</button>
+        <button class="btn btn-ghost btn-sm" onclick="editQ('${q.id}')">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteQConfirm('${q.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+
+  const pages=Math.ceil(total/PER_PAGE);
+  if(pages>1){
+    let pg='';
+    for(let i=1;i<=pages;i++) pg+=`<button class="btn ${i===bancoPg?'btn-pri':'btn-ghost'} btn-sm" onclick="bancoPg=${i};renderBancoList()">${i}</button>`;
+    $('banco-pagination').innerHTML=pg;
+  } else $('banco-pagination').innerHTML='';
+}
+
+function viewQ(id){
+  const q=getQ(id); if(!q) return;
+  const errs=new Set(getErrors());
+  $('modal-q-body').innerHTML=`
+    <div class="q-meta mb16">${discBadge(q.disciplina)}${q.topico?`<span class="badge bm">${q.topico}</span>`:''} ${difBadge(q.dificuldade)} ${errs.has(q.id)?'<span class="badge br">Errou em simulado</span>':''}</div>
+    <div style="font-size:15px;line-height:1.75;margin-bottom:20px;white-space:pre-wrap">${q.enunciado}</div>
+    <div class="alts mb16">${(q.alternativas||[]).map(a=>`<div class="alt ${a.letra===q.gabarito?'ok':''}" style="cursor:default"><span class="alt-l">${a.letra})</span><span>${a.texto}</span></div>`).join('')}</div>
+    ${q.comentario?`<div class="comment-box"><strong>💡 Comentário</strong>${q.comentario}</div>`:''}
+    ${q.anotacao?`<div class="comment-box" style="margin-top:12px;border-color:var(--sec)"><strong>📌 Sua anotação</strong>${q.anotacao}</div>`:''}
+    <div style="margin-top:16px">
+      <label class="flbl">📌 Anotação</label>
+      <textarea class="fta" id="nota-inp" rows="3">${q.anotacao||''}</textarea>
+      <button class="btn btn-sec btn-sm mt8" onclick="saveNota('${id}')">💾 Salvar Anotação</button>
+    </div>`;
+  $('modal-q-foot').innerHTML=`<div style="font-size:12px;color:var(--mut)">Fonte: ${q.fonte||'—'}</div><button class="btn btn-ghost" onclick="closeModal('modal-q')">Fechar</button><button class="btn btn-sec" onclick="editQ('${id}')">✏️ Editar</button>`;
+  openModal('modal-q');
+}
+
+async function saveNota(id){
+  const v=$('nota-inp').value;
+  await fbSet(`studypro/questions/${id}/anotacao`, v);
+  toast('Anotação salva','ok');
+}
+
+let editingId=null;
+function editQ(id){
+  const q=getQ(id); if(!q) return;
+  editingId=id;
+  const discs=Object.keys(CP);
+  $('modal-edit-body').innerHTML=`
+    <div class="fg"><label class="flbl">Disciplina</label>
+      <select class="fsel" id="ed-disc" onchange="updateEditTopicos()">
+        ${discs.map(d=>`<option value="${d}" ${d===q.disciplina?'selected':''}>${d}</option>`).join('')}
+      </select></div>
+    <div class="fg"><label class="flbl">Tópico</label>
+      <select class="fsel" id="ed-top">${(CP[q.disciplina]||[]).map(t=>`<option value="${t}" ${t===q.topico?'selected':''}>${t}</option>`).join('')}</select></div>
+    <div class="fg"><label class="flbl">Enunciado</label><textarea class="fta" id="ed-enun" rows="5">${q.enunciado}</textarea></div>
+    <div class="fg"><label class="flbl">Alternativas</label>
+      ${['A','B','C','D','E'].map((l,i)=>`<div class="flex ac gap8 mb8"><span class="badge bm" style="width:28px;text-align:center">${l}</span><input class="finp" id="ed-alt-${l}" value="${(q.alternativas||[])[i]?.texto||''}"></div>`).join('')}
+    </div>
+    <div class="fg"><label class="flbl">Gabarito</label><select class="fsel" id="ed-gab">${['A','B','C','D','E'].map(l=>`<option ${l===q.gabarito?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="fg"><label class="flbl">Comentário</label><textarea class="fta" id="ed-com" rows="3">${q.comentario||''}</textarea></div>
+    <div class="fg"><label class="flbl">Dificuldade</label>
+      <select class="fsel" id="ed-dif"><option value="facil" ${q.dificuldade==='facil'?'selected':''}>Fácil</option><option value="media" ${q.dificuldade==='media'?'selected':''}>Média</option><option value="dificil" ${q.dificuldade==='dificil'?'selected':''}>Difícil</option></select></div>
+    <div class="fg"><label class="flbl">Fonte</label><input class="finp" id="ed-fonte" value="${q.fonte||''}"></div>`;
+  openModal('modal-edit');
+}
+function updateEditTopicos(){
+  const d=$('ed-disc').value;
+  $('ed-top').innerHTML=(CP[d]||[]).map(t=>`<option value="${t}">${t}</option>`).join('');
+}
+async function saveEdit(){
+  if(!editingId) return;
+  const alts=['A','B','C','D','E'].map(l=>({letra:l,texto:($(`ed-alt-${l}`)?.value||'').trim()})).filter(a=>a.texto);
+  const updated={...getQ(editingId),disciplina:$('ed-disc').value,topico:$('ed-top').value,enunciado:$('ed-enun').value.trim(),alternativas:alts,gabarito:$('ed-gab').value,comentario:$('ed-com').value.trim(),dificuldade:$('ed-dif').value,fonte:$('ed-fonte').value.trim()};
+  await fbSet(`studypro/questions/${editingId}`, updated);
+  closeModal('modal-edit'); toast('Questão atualizada','ok');
+}
+async function deleteQConfirm(id){
+  if(!confirm('Apagar esta questão do Firebase?')) return;
+  await fbRemove(`studypro/questions/${id}`);
+  toast('Questão removida','info');
+}
+
+// ============================================================
+// UPLOAD / PDF
+// ============================================================
+function setupUpload(){
+  const discs=Object.keys(CP);
+  $('m-disc').innerHTML='<option value="">Selecione...</option>'+discs.map(d=>`<option value="${d}">${d}</option>`).join('');
+  $('m-alts').innerHTML=['A','B','C','D','E'].map(l=>`<div class="flex ac gap8 mb8"><span class="badge bm" style="width:28px;text-align:center">${l}</span><input class="finp" id="man-alt-${l}" placeholder="Alternativa ${l}..."></div>`).join('');
+  setupDrop();
+}
+function updateTopicosManual(){
+  const d=$('m-disc').value;
+  $('m-top').innerHTML='<option value="">Selecione...</option>'+(CP[d]||[]).map(t=>`<option value="${t}">${t}</option>`).join('');
+}
+function setupDrop(){
+  const z=$('drop-zone'); if(!z) return;
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('over');});
+  z.addEventListener('dragleave',()=>z.classList.remove('over'));
+  z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf')processPDF(f);else toast('Apenas arquivos PDF','err');});
+}
+function handlePDF(inp){ if(inp.files[0]) processPDF(inp.files[0]); }
+
+async function processPDF(file){
+  const apiKey=DATA.config?.geminiKey;
+  if(!apiKey){ toast('Configure sua API key do Gemini em Configurações','err'); return; }
+  $('upload-status').innerHTML=`<div class="loading loading-big"><div class="spin"></div><div><div class="loading-txt">Analisando PDF com Gemini...</div><div class="loading-sub">Isso pode levar alguns segundos</div></div></div>`;
+  $('upload-preview').innerHTML='';
+  try {
+    const b64=await toBase64(file);
+    const prompt=`Você é um extrator de questões de concurso. Analise este PDF e extraia as questões de múltipla escolha encontradas. Se o PDF tiver muitas questões, extraia no máximo as primeiras 20.
+
+Para cada questão, retorne um objeto JSON com os campos:
+- enunciado: texto completo da questão
+- alternativas: array de objetos {letra, texto} — use letras MAIÚSCULAS (A, B, C, D, E)
+- gabarito: letra correta em MAIÚSCULO (A, B, C, D ou E) - se disponível
+- comentario: explicação do gabarito se disponível, senão string vazia
+- disciplina: classifique em UMA dessas: "Língua Portuguesa", "Língua Inglesa", "Redes de Computadores", "UNIX/Linux", "Windows", "Gerência de Projetos", "Segurança da Informação I", "Storage e Virtualização", "Alto Desempenho", "Computação em Nuvem", "ITIL/COBIT", "Segurança da Informação II", "Banco de Dados", "Programação", "Raciocínio Lógico"
+- topico: subtópico específico dentro da disciplina
+- dificuldade: "facil", "media" ou "dificil"
+- fonte: número/ano da prova se identificável, senão string vazia
+
+Retorne APENAS um array JSON válido. Comece com [ e termine com ]. Sem markdown, sem texto extra.`;
+
+    const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({contents:[{parts:[{inline_data:{mime_type:'application/pdf',data:b64}},{text:prompt}]}],generationConfig:{temperature:0.1,maxOutputTokens:65536}})
+    });
+    if(!resp.ok){ const e=await resp.json(); throw new Error(e.error?.message||`Erro HTTP ${resp.status}`); }
+    const data=await resp.json();
+    const text=data.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('')||'';
+    if(!text) throw new Error('O Gemini não retornou resposta. Verifique sua chave de API.');
+    let questions;
+    try {
+      let clean = text.trim();
+      clean = clean.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+      const arrMatch = clean.match(/\[[\s\S]*/);
+      if (arrMatch) clean = arrMatch[0];
+      // Se o JSON foi truncado, tenta fechar corretamente
+      if (!clean.endsWith(']')) {
+        // Remove o último objeto incompleto e fecha o array
+        const lastComplete = clean.lastIndexOf('},');
+        if (lastComplete > -1) {
+          clean = clean.substring(0, lastComplete + 1) + ']';
+        } else {
+          const lastObj = clean.lastIndexOf('{');
+          if (lastObj > 0) clean = clean.substring(0, lastObj) + ']';
+          else clean = clean + ']';
+        }
+      }
+      questions = JSON.parse(clean);
+    } catch(pe) {
+      console.error('Resposta bruta do Gemini:', text);
+      throw new Error('Não foi possível interpretar a resposta do Gemini. Verifique o console para ver a resposta bruta.');
+    }
+    if(!Array.isArray(questions)||!questions.length) throw new Error('Nenhuma questão encontrada no PDF.');
+    questions=questions.map(q=>({
+      ...q,
+      id:uid(),
+      createdAt:new Date().toISOString(),
+      dificuldade:q.dificuldade||'media',
+      gabarito:(q.gabarito||'A').toUpperCase(),
+      alternativas:(q.alternativas||[]).map(a=>({
+        letra:(a.letra||'').toUpperCase(),
+        texto:a.texto||''
+      }))
+    }));
+    showImportPreview(questions, file.name);
+    $('upload-status').innerHTML='';
+  } catch(e){
+    $('upload-status').innerHTML=`<div class="note" style="border-left:3px solid var(--err)">❌ <span><strong>Erro:</strong> ${e.message}</span></div>`;
+  }
+}
+
+function toBase64(file){ return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);}); }
+
+let pendingQuestions=[];
+function showImportPreview(questions, filename){
+  pendingQuestions=questions;
+  $('imp-title').textContent=`${questions.length} questões extraídas de "${filename}"`;
+  $('imp-body').innerHTML=`
+    <div class="note ok mb16">✅ <span><strong>${questions.length} questões</strong> extraídas. Revise e confirme para salvar no Firebase.</span></div>
+    <div style="max-height:50vh;overflow-y:auto">
+    ${questions.map(q=>`<div class="q-card">
+      <div class="q-meta">${discBadge(q.disciplina)}<span class="badge bm">${q.topico||'—'}</span>${difBadge(q.dificuldade)}<span style="font-size:11px;color:var(--mut);margin-left:auto">Gabarito: <strong style="color:var(--ok)">${q.gabarito}</strong></span></div>
+      <div class="q-text">${q.enunciado}</div></div>`).join('')}
+    </div>`;
+  $('imp-save-btn').onclick=async()=>{
+    $('imp-save-btn').disabled=true;
+    $('imp-save-btn').textContent='Salvando no Firebase...';
+    try {
+      for(const q of pendingQuestions){
+        await fbSet(`studypro/questions/${q.id}`, q);
+      }
+      closeModal('modal-import');
+      toast(`${pendingQuestions.length} questões salvas no Firebase!`,'ok');
+    } catch(e){
+      toast('Erro ao salvar: '+e.message,'err');
+    }
+    $('imp-save-btn').disabled=false;
+    $('imp-save-btn').textContent='✅ Confirmar e Salvar';
+  };
+  openModal('modal-import');
+}
+
+async function addManual(){
+  const disc=$('m-disc').value; const top=$('m-top').value; const enun=$('m-enun').value.trim();
+  if(!disc||!enun){ toast('Preencha disciplina e enunciado','err'); return; }
+  const alts=['A','B','C','D','E'].map(l=>({letra:l,texto:($(`man-alt-${l}`)?.value||'').trim()})).filter(a=>a.texto);
+  if(alts.length<2){ toast('Adicione pelo menos 2 alternativas','err'); return; }
+  const q={id:uid(),disciplina:disc,topico:top,enunciado:enun,alternativas:alts,gabarito:$('m-gab').value,comentario:$('m-com').value.trim(),dificuldade:$('m-dif').value,fonte:$('m-fonte').value.trim(),anotacao:'',createdAt:new Date().toISOString()};
+  await fbSet(`studypro/questions/${q.id}`, q);
+  toast('Questão salva no Firebase!','ok');
+  $('m-enun').value=''; $('m-com').value='';
+  ['A','B','C','D','E'].forEach(l=>{const el=$(`man-alt-${l}`);if(el)el.value='';});
+}
+
+// ============================================================
+// SIMULADO
+// ============================================================
+let simState={questions:[],respostas:{},current:0,timer:null,totalSecs:0,elapsed:0,mode:'normal'};
+
+function updateSimTopicos(){
+  const d=$('sc-disc').value;
+  $('sc-top').innerHTML='<option value="">Todos</option>'+(CP[d]||[]).map(t=>`<option value="${t}">${t}</option>`).join('');
+  updateSimAvail();
+}
+function updateSimAvail(){
+  const d=$('sc-disc').value; const t=$('sc-top').value; const dif=$('sc-dif').value;
+  let qs=getQList();
+  if(d) qs=qs.filter(q=>q.disciplina===d);
+  if(t) qs=qs.filter(q=>q.topico===t);
+  if(dif) qs=qs.filter(q=>q.dificuldade===dif);
+  const av=$('sim-avail'); av.style.display='block';
+  av.innerHTML=`ℹ️ <span><strong>${qs.length}</strong> questão${qs.length!==1?'s':''} disponível${qs.length!==1?'s':''}</span>`;
+}
+function setupSimConfig(){
+  $('sim-config').style.display=''; $('sim-quiz').style.display='none'; $('sim-result').style.display='none';
+  const discs=[...new Set(getQList().map(q=>q.disciplina).filter(Boolean))].sort();
+  $('sc-disc').innerHTML='<option value="">Todas</option>'+discs.map(d=>`<option value="${d}">${d}</option>`).join('');
+  updateSimAvail();
+}
+function startSim(){
+  let qs=getQList();
+  const d=$('sc-disc').value; const t=$('sc-top').value; const dif=$('sc-dif').value;
+  const qtd=parseInt($('sc-qtd').value)||10;
+  const tempo=parseInt($('sc-tempo').value)||0;
+  const modo=$('sc-modo').value;
+  if(modo==='revisao'){ const errs=new Set(getErrors()); qs=qs.filter(q=>errs.has(q.id)); }
+  if(d) qs=qs.filter(q=>q.disciplina===d);
+  if(t) qs=qs.filter(q=>q.topico===t);
+  if(dif) qs=qs.filter(q=>q.dificuldade===dif);
+  qs=[...qs].sort(()=>Math.random()-.5).slice(0,qtd);
+  if(!qs.length){ toast('Nenhuma questão para esses filtros','err'); return; }
+  simState={questions:qs,respostas:{},current:0,timer:null,totalSecs:tempo*60*qs.length,elapsed:0,mode:modo,startTime:Date.now(),config:{disciplina:d||'Geral',topico:t,dificuldade:dif,quantidade:qs.length,tempo}};
+  $('sim-config').style.display='none'; $('sim-quiz').style.display=''; $('sim-result').style.display='none';
+  renderQuiz();
+  if(simState.totalSecs>0) startTimer();
+}
+function renderQuiz(){
+  const {questions,current,respostas,totalSecs,elapsed}=simState;
+  const q=questions[current];
+  const isLast=current===questions.length-1;
+  $('prog-dots').innerHTML=questions.map((qq,i)=>{
+    let cls='pd'; if(i===current)cls+=' cur'; else if(respostas[qq.id])cls+=' ans';
+    return `<div class="${cls}" onclick="simGoto(${i})">${i+1}</div>`;
+  }).join('');
+  $('sim-info').textContent=`${q.disciplina}${q.topico?' · '+q.topico:''}`;
+  const revealed=simState.mode!=='cesgranrio'&&respostas[q.id];
+  $('quiz-body').innerHTML=`
+    <div class="q-num">QUESTÃO ${current+1} de ${questions.length}</div>
+    <div class="q-body">${q.enunciado}</div>
+    <div class="alts">${(q.alternativas||[]).map(a=>{
+      let cls='alt';
+      if(revealed){ if(a.letra===q.gabarito)cls+=' ok'; else if(a.letra===respostas[q.id])cls+=' ng'; }
+      else if(respostas[q.id]===a.letra) cls+=' sel';
+      return `<button class="${cls}" onclick="selectAlt('${q.id}','${a.letra}')" ${revealed?'disabled':''}><span class="alt-l">${a.letra})</span><span>${a.texto}</span></button>`;
+    }).join('')}</div>
+    ${revealed&&q.comentario?`<div class="comment-box"><strong>💡 Comentário</strong>${q.comentario}</div>`:''}`;
+  $('quiz-actions').innerHTML=`
+    ${current>0?`<button class="btn btn-ghost" onclick="simGoto(${current-1})">← Anterior</button>`:''}
+    <span style="flex:1"></span>
+    ${!isLast?`<button class="btn btn-sec" onclick="simGoto(${current+1})">Próxima →</button>`:''}
+    ${isLast?`<button class="btn btn-pri" onclick="finishSim(false)">✅ Finalizar</button>`:''}`;
+  if(totalSecs>0){
+    const remain=totalSecs-elapsed; const m=Math.floor(remain/60),s=remain%60;
+    const el=$('sim-timer'); el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.className='timer'+(remain<120?' warn':'')+(remain<60?' dng':'');
+  }
+}
+function selectAlt(qid,letra){
+  if(simState.respostas[qid]&&simState.mode!=='cesgranrio') return;
+  simState.respostas[qid]=letra; renderQuiz();
+}
+function simGoto(i){ simState.current=i; renderQuiz(); }
+function startTimer(){
+  clearInterval(simState.timer);
+  simState.timer=setInterval(()=>{
+    simState.elapsed++;
+    if(simState.totalSecs>0&&simState.elapsed>=simState.totalSecs){clearInterval(simState.timer);finishSim(true);}
+    else{ const {totalSecs,elapsed}=simState; if(totalSecs<=0)return; const remain=totalSecs-elapsed; const m=Math.floor(remain/60),s=remain%60; const el=$('sim-timer'); if(!el)return; el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; el.className='timer'+(remain<120?' warn':'')+(remain<60?' dng':''); }
+  },1000);
+}
+async function finishSim(auto){
+  clearInterval(simState.timer);
+  const {questions,respostas,elapsed,config}=simState;
+  let acertos=0;
+  questions.forEach(q=>{if(respostas[q.id]===q.gabarito)acertos++;});
+  const sim={id:uid(),createdAt:new Date().toISOString(),config,questoes:questions.map(q=>q.id),respostas,acertos,total:questions.length,tempo_gasto:elapsed};
+  await fbSet(`studypro/simulados/${sim.id}`, sim);
+  showResult(sim, questions);
+}
+function showResult(sim,questions){
+  $('sim-quiz').style.display='none'; $('sim-result').style.display='';
+  const pct=Math.round((sim.acertos/sim.total)*100);
+  const col=pct>=70?'var(--ok)':pct>=50?'var(--warn)':'var(--err)';
+  const grade=pct>=90?'Excelente!':pct>=70?'Aprovado!':pct>=50?'Regular':pct>=30?'Precisa melhorar':'Atenção!';
+  $('res-score').style.color=col; $('res-score').textContent=`${sim.acertos}/${sim.total}`;
+  $('res-grade').textContent=`${pct}% — ${grade}`; $('res-grade').style.color=col;
+  const mins=Math.floor(sim.tempo_gasto/60),secs=sim.tempo_gasto%60;
+  $('res-stats').innerHTML=`
+    <div class="stat-card" style="padding:12px 18px;min-width:110px"><div class="stat-val" style="font-size:24px;color:var(--ok)">${sim.acertos}</div><div class="stat-lbl">Acertos</div></div>
+    <div class="stat-card r" style="padding:12px 18px;min-width:110px"><div class="stat-val" style="font-size:24px">${sim.total-sim.acertos}</div><div class="stat-lbl">Erros</div></div>
+    <div class="stat-card b" style="padding:12px 18px;min-width:110px"><div class="stat-val" style="font-size:22px">${mins>0?mins+'m ':''} ${secs}s</div><div class="stat-lbl">Tempo</div></div>`;
+  $('res-review').innerHTML=`<div class="card-title mt24 mb16">📋 Revisão das Questões</div>`+
+    questions.map((q,i)=>{
+      const resp=sim.respostas[q.id]; const ok=resp===q.gabarito;
+      return `<div class="q-card" style="border-left:3px solid ${ok?'var(--ok)':'var(--err)'}">
+        <div class="q-meta"><span class="badge ${ok?'bg':'br'}">${ok?'✓ Certa':'✗ Errada'}</span>${discBadge(q.disciplina)}<span class="badge bm">${i+1}</span>
+          ${resp?`<span style="font-size:12px;color:var(--mut)">Sua: <strong style="color:${ok?'var(--ok)':'var(--err)'}">${resp}</strong></span>`:'<span style="font-size:12px;color:var(--err)">Não respondida</span>'}
+          <span style="font-size:12px;color:var(--mut)">Gabarito: <strong style="color:var(--ok)">${q.gabarito}</strong></span></div>
+        <div class="q-text">${q.enunciado}</div>
+        ${q.comentario&&!ok?`<div class="comment-box mt8" style="font-size:12px"><strong>💡 Comentário</strong>${q.comentario}</div>`:''}
+      </div>`;
+    }).join('');
+}
+
+// ============================================================
+// REVISÃO
+// ============================================================
+function renderRevisao(){
+  const errs=getErrors();
+  if(!errs.length){ $('rev-content').innerHTML=`<div class="empty"><span class="empty-ico">🎉</span><div class="empty-ttl">Sem erros para revisar!</div><div class="empty-dsc">Continue praticando!</div><div class="mt16"><button class="btn btn-pri" onclick="go('simulado')">Fazer Simulado</button></div></div>`; return; }
+  const qs=errs.map(id=>getQ(id)).filter(Boolean);
+  const byDisc={};
+  qs.forEach(q=>{if(!byDisc[q.disciplina])byDisc[q.disciplina]=[];byDisc[q.disciplina].push(q);});
+  $('rev-content').innerHTML=`
+    <div class="note info mb16">🔁 <span>Você tem <strong>${errs.length}</strong> questão${errs.length!==1?'s':''} para revisar.</span></div>
+    <div class="flex gap8 mb16"><button class="btn btn-pri" onclick="go('simulado');setTimeout(()=>{$('sc-modo').value='revisao';},100)">📝 Simulado de Revisão</button></div>
+    ${Object.entries(byDisc).map(([d,qs2])=>`
+      <div class="card mb16">
+        <div class="card-title">${discBadge(d)} ${d} <span class="badge br">${qs2.length} erro${qs2.length!==1?'s':''}</span></div>
+        ${qs2.map(q=>`<div class="q-card"><div class="q-meta">${q.topico?`<span class="badge bm">${q.topico}</span>`:''}${difBadge(q.dificuldade)}</div><div class="q-text">${q.enunciado}</div><div class="q-actions"><button class="btn btn-sec btn-sm" onclick="viewQ('${q.id}')">👁 Ver</button></div></div>`).join('')}
+      </div>`).join('')}`;
+}
+
+// ============================================================
+// FLASHCARDS
+// ============================================================
+const FC_DATA={
+  "Língua Portuguesa":[{f:"Coesão textual",b:"Mecanismos que garantem ligação entre elementos do texto: referenciação, substituição, conectores e sequenciação."},{f:"Regência verbal",b:"Relação de dependência entre o verbo e seus complementos. Define se o verbo exige preposição e qual."},{f:"Concordância nominal",b:"Acordo do adjetivo, artigo, pronome e numeral com o substantivo em gênero e número."},{f:"Crase",b:"Fusão da preposição 'a' com o artigo definido feminino 'a'. Indicada pelo acento grave (à)."},{f:"Colocação pronominal",b:"Posição do pronome átono: próclise (antes do verbo), mesóclise (no meio) e ênclise (depois)."}],
+  "Redes de Computadores":[{f:"Modelo OSI",b:"7 camadas: Física, Enlace, Rede, Transporte, Sessão, Apresentação e Aplicação."},{f:"TCP vs UDP",b:"TCP: orientado a conexão, confiável. UDP: sem conexão, mais rápido, sem garantia de entrega."},{f:"DNS",b:"Domain Name System — traduz nomes de domínio em endereços IP."},{f:"NAT",b:"Network Address Translation — converte IPs privados em públicos para acesso à internet."}],
+  "Segurança da Informação I":[{f:"Firewall",b:"Monitora e controla tráfego de rede com base em regras de segurança."},{f:"IPS vs IDS",b:"IDS: detecta intrusões. IPS: detecta E bloqueia automaticamente."},{f:"MFA",b:"Multi-Factor Authentication — dois ou mais fatores: algo que você sabe, tem ou é."},{f:"Ransomware",b:"Malware que criptografa dados e exige resgate pela chave de descriptografia."}],
+  "Computação em Nuvem":[{f:"IaaS / PaaS / SaaS",b:"IaaS: infraestrutura. PaaS: plataforma para desenvolvimento. SaaS: software pronto para uso."},{f:"Elasticidade",b:"Capacidade de aumentar ou diminuir recursos automaticamente conforme a demanda."},{f:"Alta Disponibilidade",b:"Sistema operacional com mínimo downtime usando redundância e failover."}],
+  "Banco de Dados":[{f:"ACID",b:"Atomicidade, Consistência, Isolamento e Durabilidade — transações confiáveis."},{f:"Stored Procedure",b:"Instruções SQL pré-compiladas armazenadas no banco, executadas por chamada."},{f:"Trigger",b:"Procedimento executado automaticamente em resposta a INSERT, UPDATE ou DELETE."}],
+  "Alto Desempenho":[{f:"Container vs VM",b:"Containers compartilham kernel (mais leves). VMs têm SO completo (mais isoladas)."},{f:"Microsserviços",b:"Arquitetura com serviços pequenos e independentes, cada um com sua responsabilidade."},{f:"DevOps",b:"Une desenvolvimento e operações para entregar software mais rápido e com mais qualidade."}]
+};
+let fcState={cards:[],idx:0,score:{sim:0,nao:0}};
+function setupFC(){
+  $('fc-config').style.display=''; $('fc-study').style.display='none';
+  $('fc-disc').innerHTML='<option value="">Todos</option>'+Object.keys(FC_DATA).map(d=>`<option value="${d}">${d}</option>`).join('');
+}
+function startFC(){
+  const disc=$('fc-disc').value; const src=$('fc-fonte').value;
+  let cards=[];
+  if(src==='questoes'&&getQList().length){
+    const qs=disc?getQList().filter(q=>q.disciplina===disc):getQList();
+    const byTop={};
+    qs.forEach(q=>{if(q.topico){if(!byTop[q.topico])byTop[q.topico]=[];byTop[q.topico].push(q);}});
+    cards=Object.entries(byTop).slice(0,20).map(([t,qs2])=>({f:t,b:`${qs2.length} questão${qs2.length!==1?'s':''} no banco. Gabarito mais frequente: ${qs2[0].gabarito}.`}));
+  }
+  if(!cards.length){ const pool=disc?FC_DATA[disc]||[]:Object.values(FC_DATA).flat(); cards=[...pool].sort(()=>Math.random()-.5); }
+  if(!cards.length){ toast('Nenhum flashcard disponível','err'); return; }
+  fcState={cards,idx:0,score:{sim:0,nao:0}};
+  $('fc-config').style.display='none'; $('fc-study').style.display='';
+  renderFC();
+}
+function renderFC(){
+  const {cards,idx,score}=fcState;
+  $('fc-front').textContent=cards[idx].f; $('fc-back').textContent=cards[idx].b;
+  $('fc-card').classList.remove('flipped'); $('fc-prog').textContent=`${idx+1} / ${cards.length}`;
+  const pct=Math.round(((score.sim+score.nao)/Math.max(cards.length,1))*100);
+  $('fc-pct').textContent=pct+'%'; $('fc-bar').style.width=pct+'%';
+}
+function flipFC(){ $('fc-card').classList.toggle('flipped'); }
+function nextFC(){ if(fcState.idx<fcState.cards.length-1){fcState.idx++;renderFC();}else endFC(); }
+function rateFC(ok){ if(ok)fcState.score.sim++;else fcState.score.nao++; nextFC(); }
+function endFC(){ toast(`${fcState.score.sim}/${fcState.cards.length} dominados!`,'ok'); $('fc-config').style.display=''; $('fc-study').style.display='none'; }
+
+// ============================================================
+// DESEMPENHO
+// ============================================================
+let charts2={};
+function renderDesempenho(){
+  const sims=getSimList(); const qs=getQList();
+  const total=sims.length; const avgAcerto=total?Math.round(sims.reduce((a,s)=>a+(s.acertos/Math.max(s.total,1))*100,0)/total):0;
+  $('desemp-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Simulados</div></div>
+    <div class="stat-card b"><div class="stat-val">${avgAcerto}%</div><div class="stat-lbl">Média Geral</div></div>
+    <div class="stat-card r"><div class="stat-val">${getErrors().length}</div><div class="stat-lbl">Erros Acumulados</div></div>
+    <div class="stat-card y"><div class="stat-val">${qs.length}</div><div class="stat-lbl">Questões no Banco</div></div>`;
+  if(charts2.ev) charts2.ev.destroy();
+  const evData=sims.slice(-10); const evLabels=evData.map((_,i)=>`S${i+1}`); const evVals=evData.map(s=>Math.round((s.acertos/Math.max(s.total,1))*100));
+  if(evLabels.length) charts2.ev=new Chart($('chart-evolucao').getContext('2d'),{type:'line',data:{labels:evLabels,datasets:[{data:evVals,borderColor:'rgba(0,200,83,1)',backgroundColor:'rgba(0,200,83,.1)',borderWidth:2,pointBackgroundColor:'rgba(0,200,83,1)',tension:.4,fill:true}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7a99'},grid:{color:'#2a3347'}},y:{min:0,max:100,ticks:{color:'#6b7a99',callback:v=>v+'%'},grid:{color:'#2a3347'}}}}});
+  if(charts2.dif) charts2.dif.destroy();
+  const dd={facil:{ok:0,ng:0},media:{ok:0,ng:0},dificil:{ok:0,ng:0}};
+  sims.forEach(s=>Object.keys(s.respostas||{}).forEach(id=>{const q=getQ(id);if(q){const d=q.dificuldade||'media';if(s.respostas[id]===q.gabarito)dd[d].ok++;else dd[d].ng++;}}));
+  charts2.dif=new Chart($('chart-dif').getContext('2d'),{type:'bar',data:{labels:['Fácil','Média','Difícil'],datasets:[{label:'Acertos',data:[dd.facil.ok,dd.media.ok,dd.dificil.ok],backgroundColor:'rgba(63,185,80,.7)'},{label:'Erros',data:[dd.facil.ng,dd.media.ng,dd.dificil.ng],backgroundColor:'rgba(248,81,73,.7)'}]},options:{responsive:true,plugins:{legend:{labels:{color:'#eaf0fb'}}},scales:{x:{ticks:{color:'#6b7a99'},grid:{color:'#2a3347'}},y:{ticks:{color:'#6b7a99'},grid:{color:'#2a3347'}}}}});
+  if(charts2.disc2) charts2.disc2.destroy();
+  const dp={};
+  sims.forEach(s=>Object.keys(s.respostas||{}).forEach(id=>{const q=getQ(id);if(q){const d=q.disciplina;if(!dp[d])dp[d]={ok:0,total:0};dp[d].total++;if(s.respostas[id]===q.gabarito)dp[d].ok++;}}));
+  const dpK=Object.keys(dp);
+  if(dpK.length) charts2.disc2=new Chart($('chart-disc2').getContext('2d'),{type:'bar',data:{labels:dpK,datasets:[{label:'% Acertos',data:dpK.map(k=>Math.round(dp[k].ok/dp[k].total*100)),backgroundColor:'rgba(88,166,255,.6)',borderColor:'rgba(88,166,255,1)',borderWidth:1,borderRadius:4}]},options:{responsive:true,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{min:0,max:100,ticks:{color:'#6b7a99',callback:v=>v+'%'},grid:{color:'#2a3347'}},y:{ticks:{color:'#6b7a99'},grid:{color:'#2a3347'}}}}});
+  if(!sims.length){ $('hist-sims').innerHTML='<div style="color:var(--mut);padding:16px 0;font-size:13px">Nenhum simulado ainda.</div>'; return; }
+  $('hist-sims').innerHTML=`<table style="width:100%;border-collapse:collapse"><thead><tr style="border-bottom:1px solid var(--brd)"><th style="text-align:left;padding:8px;font-size:11px;color:var(--mut)">DATA</th><th style="text-align:left;padding:8px;font-size:11px;color:var(--mut)">DISCIPLINA</th><th style="text-align:center;padding:8px;font-size:11px;color:var(--mut)">QUESTÕES</th><th style="text-align:center;padding:8px;font-size:11px;color:var(--mut)">ACERTOS</th><th style="text-align:center;padding:8px;font-size:11px;color:var(--mut)">NOTA</th></tr></thead><tbody>${sims.slice().reverse().slice(0,20).map(s=>{const pct=Math.round((s.acertos/Math.max(s.total,1))*100);const col=pct>=70?'var(--ok)':pct>=50?'var(--warn)':'var(--err)';return `<tr style="border-bottom:1px solid var(--brd)"><td style="padding:9px 8px;font-size:12px;color:var(--mut)">${new Date(s.createdAt).toLocaleDateString('pt-BR')}</td><td style="padding:9px 8px;font-size:13px">${s.config?.disciplina||'Geral'}</td><td style="padding:9px 8px;text-align:center;font-family:'JetBrains Mono';font-size:13px">${s.total}</td><td style="padding:9px 8px;text-align:center;font-family:'JetBrains Mono';font-size:13px">${s.acertos}</td><td style="padding:9px 8px;text-align:center;font-family:'JetBrains Mono';font-size:15px;font-weight:600;color:${col}">${pct}%</td></tr>`;}).join('')}</tbody></table>`;
+}
+
+// ============================================================
+// COBERTURA
+// ============================================================
+function renderCobertura(){
+  const byTopico={};
+  getQList().forEach(q=>{const k=`${q.disciplina}||${q.topico||'Geral'}`;byTopico[k]=(byTopico[k]||0)+1;});
+  $('cov-content').innerHTML=Object.entries(CP).map(([disc,tops])=>{
+    const discTotal=tops.reduce((a,t)=>a+(byTopico[`${disc}||${t}`]||0),0);
+    return `<div class="card mb16"><div class="card-title">${discBadge(disc)} ${disc} <span style="font-weight:400;font-size:13px;color:var(--mut)">(${discTotal} questões)</span></div>${
+      tops.map(t=>{const cnt=byTopico[`${disc}||${t}`]||0;const pct=Math.min(cnt*10,100);const col=cnt>=5?'var(--ok)':cnt>=2?'var(--sec)':'var(--err)';
+        return `<div class="cov-item"><div class="cov-lbl"><span style="font-size:13px">${t}</span><span class="cov-cnt">${cnt} questão${cnt!==1?'s':''}</span></div><div class="pbar"><div class="pfill" style="width:${pct}%;background:${col}"></div></div></div>`;
+      }).join('')}</div>`;
+  }).join('');
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function loadConfig(){
+  $('api-key-inp').value=DATA.config?.geminiKey||'';
+  $('fb-status-card').innerHTML=`<div class="note ok"><div class="sync-dot ok" style="display:inline-block;margin-right:6px"></div><span>Firebase Realtime Database conectado e sincronizando em tempo real.</span></div>`;
+}
+async function saveConfig(){
+  DATA.config={...DATA.config,geminiKey:$('api-key-inp').value.trim()};
+  await fbSet('studypro/config', DATA.config);
+  $('cfg-status').innerHTML='<span style="color:var(--ok)">✅ Salvo!</span>';
+  setTimeout(()=>$('cfg-status').textContent='',2500);
+}
+
+// ============================================================
+// BACKUP JSON (auxiliar)
+// ============================================================
+function exportJSON(){
+  const blob=new Blob([JSON.stringify({questions:DATA.questions,simulados:DATA.simulados,config:DATA.config},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url; a.download=`studypro-backup-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+  toast('Backup exportado!','ok');
+}
+async function importJSON(inp){
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=async e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.questions){ toast('Arquivo inválido','err'); return; }
+      const qs=Object.values(d.questions||{});
+      if(!confirm(`Importar ${qs.length} questões para o Firebase?`)) return;
+      for(const q of qs){ if(!DATA.questions[q.id]) await fbSet(`studypro/questions/${q.id}`,q); }
+      toast(`Importado! ${qs.length} questões enviadas ao Firebase`,'ok');
+    }catch(err){toast('Erro: '+err.message,'err');}
+  };
+  r.readAsText(f); inp.value='';
+}
+async function clearAll(){
+  if(!confirm('ATENÇÃO: Apagará TUDO do Firebase. Tem certeza?')) return;
+  if(!confirm('Confirmação final: apagar todos os dados?')) return;
+  await fbRemove('studypro');
+  toast('Todos os dados foram apagados','info');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener('load', async ()=>{
+  $('init-msg').textContent='Conectando ao Firebase...';
+  try {
+    // Testa conexão lendo uma vez
+    await db.ref('studypro/config').once('value').then(snap=>{
+      DATA.config=snap.val()||{geminiKey:''};
+    });
+    // Lê dados iniciais
+    $('init-msg').textContent='Carregando questões...';
+    await db.ref('studypro/questions').once('value').then(snap=>{ DATA.questions=snap.val()||{}; });
+    await db.ref('studypro/simulados').once('value').then(snap=>{ DATA.simulados=snap.val()||{}; });
+
+    // Setup listeners em tempo real
+    setupListeners();
+    fbReady=true;
+    updateSidebar();
+
+    // Esconde tela de carregamento
+    $('init-screen').style.opacity='0';
+    $('init-screen').style.transition='opacity .4s';
+    setTimeout(()=>{ $('init-screen').style.display='none'; },400);
+
+    go('dashboard');
+  } catch(e) {
+    $('init-msg').textContent='Erro ao conectar: '+e.message;
+    $('init-msg').style.color='var(--err)';
+  }
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'&&currentView==='simulado'&&simState.questions.length){ const n=simState.current+1;if(n<simState.questions.length)simGoto(n); }
+    if(e.key==='ArrowLeft'&&currentView==='simulado'&&simState.questions.length){ const n=simState.current-1;if(n>=0)simGoto(n); }
+  });
+});
+</script>
+</body>
+</html>
