@@ -1,1 +1,1 @@
-https://wallacebavila-art.github.io/studypro-petrobras/
+https://wallacebavila-art.github.io/StudyPro/
